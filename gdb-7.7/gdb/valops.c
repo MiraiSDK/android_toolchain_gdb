@@ -188,7 +188,12 @@ struct value *
 value_allocate_space_in_inferior (int len)
 {
   struct objfile *objf;
-  struct value *val = find_function_in_inferior ("malloc", &objf);
+    // on android, the dynamic linker and libc both implemented function "malloc"
+    // we want to find the implementation in libc.
+    // but find_function_in_inferior return us the linker's implementation, which is not really malloc
+    // as a quick-dirty-hack, we simply call a malloc wrapper to workaround this issue
+    // the client is required to implemente a function called ___gdb_android_workaround_malloc() which is call malloc()
+  struct value *val = find_function_in_inferior ("___gdb_android_workaround_malloc", &objf);
   struct gdbarch *gdbarch = get_objfile_arch (objf);
   struct value *blocklen;
 
